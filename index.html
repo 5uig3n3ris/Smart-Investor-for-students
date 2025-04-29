@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Investment Options Comparison</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f9f9f9;
+      margin: 20px;
+      color: #333;
+    }
+    h2 {
+      margin-top: 40px;
+    }
+    #refreshStatus {
+    font-size: 20px;
+    font-weight: bold;
+    margin-top: 20px;
+    display: none; /* Start with it hidden */
+    text-align: center; /* Optional: centers the text */
+    color: #333; /* Optional: sets the color */
+  }
+    .chart-container {
+      width: 90%;
+      max-width: 800px;
+      margin: 30px auto;
+    }
+    
+    .dark-mode {
+      background: #121212;
+      color: #f4f4f4;
+  }
+    header {
+      text-align: center;
+      padding: 20px;
+      background-color: #007BFF;
+      color: white;
+    }
+    .summary-cards {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+    }
+    .card {
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      flex-grow: 1;
+      margin: 10px;
+    }
+    .charts, .tools, .insights {
+      margin-bottom: 20px;
+    }
+    /* .chart-container {
+      position: relative;
+      width: 100%;
+      height: 400px;
+    } */
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 20px;
+    }
+    .custom-dropdown {
+      position: relative;
+      width: 300px;
+      margin-bottom: 20px;
+    }
+    .custom-dropdown input {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 1px solid #aaa;
+      border-radius: 8px;
+      background: #fff;
+    }
+    .dark-mode .custom-dropdown input {
+      background: #2c2c2c;
+      color: #fff;
+      border-color: #555;
+    }
+    .custom-dropdown .options {
+      position: absolute;
+      width: 100%;
+      background: #fff;
+      border: 1px solid #aaa;
+      border-radius: 8px;
+      margin-top: 5px;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+      flex-direction: column;
+      z-index: 100;
+    }
+    .dark-mode .custom-dropdown .options {
+      background: #2c2c2c;
+      border-color: #555;
+    }
+    .option {
+      padding: 10px;
+      cursor: pointer;
+    }
+    .option:hover {
+      background: #f0f0f0;
+    }
+    .dark-mode .option:hover {
+      background: #3a3a3a;
+    }
+    .crypto {
+      margin-top: 20px;
+      font-size: 24px;
+    }
+    .price {
+      font-weight: bold;
+      margin-left: 10px;
+    }
+    .change {
+      margin-left: 10px;
+      font-size: 18px;
+    }
+    .up {
+      color: green;
+    }
+    .down {
+      color: red;
+    }
+    .loader {
+      display: none;
+      margin-top: 20px;
+      font-size: 18px;
+    }
+    .toggle-darkmode {
+      margin-top: 30px;
+      cursor: pointer;
+      padding: 10px 20px;
+      background-color: #333;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      transition: background 0.3s;
+    }
+    .toggle-darkmode:hover {
+      background-color: #555;
+    }
+      
+    footer {
+      text-align: center;
+      padding: 10px;
+      background-color: #007BFF;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Smart Investing for Students</h1>
+    <p>Compare, Calculate, Choose Wisely</p>
+    <!-- <button id="toggleTheme">Toggle Theme</button> -->
+  </header>
+
+  <h1>Crypto Dashboard</h1>
+
+  <div class="custom-dropdown" id="currencyDropdown">
+    <input type="text" id="currencyInput" placeholder="Search currency...">
+    <div class="options" id="currencyOptions"></div>
+  </div>
+
+  <div id="prices">
+    <div class="crypto">
+      Bitcoin: <span class="price" id="btcPrice"></span> 
+               <span class="change" id="btcChange"></span>
+               <span class="price-full" id="btcPriceFull"></span>
+    </div>
+    <div class="crypto">
+      Ethereum: <span class="price" id="ethPrice"></span>
+                <span class="change" id="ethChange"></span>
+                <span class="price-full" id ="ethPriceFull"></span>
+    </div>
+    <div class="crypto">
+      Solana: <span class="price" id="solPrice"></span>
+              <span class="change" id="solChange"></span>
+              <span class="price-full" id="solPriceFull"></span>
+    </div>
+  </div>
+
+  <div id="refreshStatus"></div>
+  <div class="loader" id="loader">Loading prices...</div>
+
+  <div id="counter">
+    <div id="mainValue"></div>
+    <div id="fullValue"></div>
+  </div>
+
+  <section class="live-data">
+    <h2>Live Crypto Prices</h2>
+  </section>
+  
+
+  <h1 style="text-align: center;">Investment Options: Risk vs Return vs Liquidity</h1>
+
+  <div class="chart-container">
+    <h2>Radar Chart</h2>
+    <canvas id="radarChart"></canvas>
+  </div>
+
+  <div class="chart-container">
+    <h2>Grouped Bar Chart</h2>
+    <canvas id="barChart"></canvas>
+  </div>
+
+  <section class="tools">
+    <h2>Interactive Tools</h2>
+
+    <div class="tool quiz">
+      <h3>What Kind of Investor Are You?</h3>
+      <form id="quizForm">
+        <label>1. Investment Horizon?
+          <select name="horizon">
+            <option value="short">Short-Term</option>
+            <option value="long">Long-Term</option>
+          </select>
+        </label>
+        <label>2. Risk Tolerance?
+          <select name="risk">
+            <option value="low">Low</option>
+            <option value="balanced">Balanced</option>
+            <option value="high">High</option>
+          </select>
+        </label>
+        <button type="submit">Get Recommendation</button>
+      </form>
+      <div id="quizResult"></div>
+    </div>
+
+    <div class="tool calculator">
+      <h3>Investment Return Calculator</h3>
+      <label>Monthly Investment ($): <input type="number" id="monthlyAmount"></label>
+      <label>Duration (Years): <input type="number" id="duration"></label>
+      <label>Investment Type:
+        <select id="investmentType">
+          <option value="mutual">Mutual Funds</option>
+          <option value="crypto">Crypto</option>
+          <option value="p2p">P2P Lending</option>
+        </select>
+      </label>
+      <button onclick="calculateReturns()">Calculate</button>
+      <div id="calcResult"></div>
+    </div>
+  </section>
+  <section class="insights">
+    <h2>Key Insights</h2>
+    <ul id="insightList">
+      <li>Mutual Funds offer steady growth with lower risk.</li>
+      <li>Crypto shows high return potential but extreme volatility.</li>
+    </ul>
+  </section>
+
+  <!-- Added Recommendations Panel -->
+<section class="recommendations">
+  <h2>Recommendations Panel</h2>
+  <div class="recommendation-cards">
+    <div class="card">
+      <h3>Zerodha</h3>
+      <p>Best for beginners to start investing in mutual funds and stocks.</p>
+      <p><a href = "https://zerodha.com/" target = "_blank">Zerodha</a>
+    </div>
+    <div class="card">
+      <h3>Groww</h3>
+      <p>Simple and user-friendly platform for mutual funds and SIPs.</p>
+      <p><a href = "https://groww.in/" target="_blank">Groww</a></p>
+    </div>
+    <div class="card">
+      <h3>CoinDCX</h3>
+      <p>Top platform for trading and investing in cryptocurrencies.</p>
+      <p><a href = "https://coindcx.com/" target ="_blank"></a></p>
+    </div>
+  </div>
+</section>
+
+<!-- Updated Footer with Links and Disclaimer -->
+<footer>
+  <p>Data Sources: <a href="https://www.coingecko.com" target="_blank">CoinGecko</a>, Mock Data</p>
+  <p>Disclaimer: This is an educational prototype. Not financial advice.</p>
+</footer>
+
+
+  <script>
+    const investmentOptions = [
+      { type: 'Mutual Funds', return: 8, risk: 3, liquidity: 7 },
+      { type: 'Crypto', return: 12, risk: 9, liquidity: 8 },
+      { type: 'P2P Lending', return: 10, risk: 6, liquidity: 5 },
+      { type: 'Digital Gold', return: 6, risk: 2, liquidity: 9 },
+      { type: 'Savings Account', return: 4, risk: 1, liquidity: 10 }
+    ];
+
+    const labels = ['Return', 'Risk', 'Liquidity'];
+
+    const radarDatasets = investmentOptions.map(option => ({
+      label: option.type,
+      data: [option.return, option.risk, option.liquidity],
+      fill: true,
+      backgroundColor: `rgba(${Math.floor(Math.random()*255)}, ${Math.floor(Math.random()*255)}, ${Math.floor(Math.random()*255)}, 0.2)`,
+      borderColor: `rgba(${Math.floor(Math.random()*255)}, ${Math.floor(Math.random()*255)}, ${Math.floor(Math.random()*255)}, 1)`,
+      pointBackgroundColor: '#fff'
+    }));
+
+    const radarCtx = document.getElementById('radarChart').getContext('2d');
+    new Chart(radarCtx, {
+      type: 'radar',
+      data: {
+        labels: labels,
+        datasets: radarDatasets
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: false
+          }
+        }
+      }
+    });
+
+    const barCtx = document.getElementById('barChart').getContext('2d');
+    new Chart(barCtx, {
+      type: 'bar',
+      data: {
+        labels: investmentOptions.map(i => i.type),
+        datasets: [
+          {
+            label: 'Return (%)',
+            data: investmentOptions.map(i => i.return),
+            backgroundColor: 'rgba(54, 162, 235, 0.6)'
+          },
+          {
+            label: 'Risk (1-10)',
+            data: investmentOptions.map(i => i.risk),
+            backgroundColor: 'rgba(255, 99, 132, 0.6)'
+          },
+          {
+            label: 'Liquidity (1-10)',
+            data: investmentOptions.map(i => i.liquidity),
+            backgroundColor: 'rgba(75, 192, 192, 0.6)'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+
+    // Quiz Logic
+document.getElementById('quizForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const risk = this.risk.value;
+  const horizon = this.horizon.value;
+
+  let result = "Balanced";
+  if (risk === 'low') result = "Conservative (Savings + Gold)";
+  if (risk === 'high' && horizon === 'long') result = "Aggressive (Crypto + P2P)";
+  document.getElementById('quizResult').innerText = `You're a ${result} investor!`;
+});
+
+// Calculator Logic
+function calculateReturns() {
+  const amount = +document.getElementById('monthlyAmount').value;
+  const years = +document.getElementById('duration').value;
+  const type = document.getElementById('investmentType').value;
+
+  const rates = {
+    mutual: 0.08,
+    crypto: 0.15,
+    p2p: 0.12
+  };
+
+  const months = years * 12;
+  const total = amount * months * (1 + rates[type]);
+  document.getElementById('calcResult').innerText = `Estimated Return: $${Math.round(total)}`;
+}
+let selectedCurrency = 'usd';
+    let currencySymbol = '$';
+    const currencies = {
+      usd: '$', inr: '₹', eur: '€', gbp: '£', irr:'﷼', ngn: '₦', jpy: '¥', aud: 'A$', cad: 'C$', chf: 'CHF',
+      cny: '¥', hkd: 'HK$', krw: '₩', sgd: 'S$', brl: 'R$', zar: 'R', rub: '₽', try: '₺',
+      php: '₱', mxn: '$', thb: '฿', sek: 'kr', nok: 'kr', dkk: 'kr', pln: 'zł', idr: 'Rp',
+      myr: 'RM', vnd: '₫', czk: 'Kč', huf: 'Ft', ils: '₪', sar: 'ر.س', aed: 'د.إ'
+    };
+
+    const currencyInput = document.getElementById('currencyInput');
+    const currencyOptions = document.getElementById('currencyOptions');
+
+    function populateCurrencies() {
+      currencyOptions.innerHTML = '';
+      for (const [code, symbol] of Object.entries(currencies)) {
+        const option = document.createElement('div');
+        option.className = 'option';
+        option.innerText = `${code.toUpperCase()} (${symbol})`;
+        option.dataset.currency = code;
+        option.dataset.symbol = symbol;
+        currencyOptions.appendChild(option);
+      }
+    }
+
+    populateCurrencies();
+
+    currencyInput.addEventListener('focus', () => {
+      currencyOptions.style.display = 'flex';
+    });
+
+    currencyInput.addEventListener('input', () => {
+      const value = currencyInput.value.toLowerCase();
+      document.querySelectorAll('.option').forEach(option => {
+        if (option.innerText.toLowerCase().includes(value)) {
+          option.style.display = 'block';
+        } else {
+          option.style.display = 'none';
+        }
+      });
+    });
+
+    currencyOptions.addEventListener('click', e => {
+      if (e.target.classList.contains('option')) {
+        selectedCurrency = e.target.dataset.currency;
+        currencySymbol = e.target.dataset.symbol;
+        currencyInput.value = `${selectedCurrency.toUpperCase()} (${currencySymbol})`;
+        currencyOptions.style.display = 'none';
+        fetchCryptoPrices();
+      }
+    });
+
+    window.addEventListener('click', e => {
+      if (!document.getElementById('currencyDropdown').contains(e.target)) {
+        currencyOptions.style.display = 'none';
+      }
+    });
+
+    function formatShortNumber(num) {
+      if (num >= 1e9) return (num / 1e9).toFixed(2) + "B";
+      if (num >= 1e6) return (num / 1e6).toFixed(2) + "M";
+      if (num >= 1e3) return (num / 1e3).toFixed(2) + "K";
+      return num.toString();
+    }
+
+    // Debugged and improved animateValue function
+function animateValue(mainId, fullId, start, end, duration, prefix = '') {
+  const mainObj = document.getElementById(mainId);
+  const fullObj = document.getElementById(fullId);
+
+  // Ensure elements exist
+  if (!mainObj || !fullObj) {
+    console.error(`Elements with IDs '${mainId}' or '${fullId}' not found.`);
+    return;
+  }
+
+  // Ensure start and end are valid numbers
+  if (isNaN(start)) start = 0;
+  if (isNaN(end)) {
+    console.error(`Invalid 'end' value: ${end}`);
+    mainObj.innerText = prefix + '0';
+    fullObj.innerText = prefix + '0';
+    return;
+  }
+
+  const range = end - start;
+  const startTime = performance.now();
+
+  function step(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+
+    // Easing function for smoother animation
+    const easedProgress = 1 - Math.pow(1 - progress, 4);
+
+    const value = start + range * easedProgress;
+    mainObj.innerText = prefix + formatShortNumber(value);
+    fullObj.innerText = prefix + Number(value.toFixed(0)).toLocaleString();
+
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    } else {
+      // Add bounce effect after finishing
+      mainObj.style.transform = 'scale(1.15)';
+      setTimeout(() => {
+        mainObj.style.transform = 'scale(1)';
+      }, 400);
+    }
+  }
+
+  requestAnimationFrame(step);
+}
+
+// Updated animateValue function call to dynamically display live API values
+async function fetchCryptoPrices() {
+  const loader = document.getElementById('loader');
+  const prices = document.getElementById('prices');
+  const refreshStatus = document.getElementById('refreshStatus');
+  loader.style.display = 'block';
+  prices.style.display = 'none';
+
+  // Show refreshing message
+  refreshStatus.innerText = "🔄 Refreshing...";
+  refreshStatus.style.display = 'block';
+
+  const coins = ['bitcoin', 'ethereum', 'solana'];
+
+  const url = `https://api.coingecko.com/api/v3/simple/price?ids=${coins.join(',')}&vs_currencies=${selectedCurrency}&include_24hr_change=true`;
+
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+
+    for (const coin of coins) {
+      const finalPrice = data[coin][selectedCurrency];
+      const change24h = data[coin][`${selectedCurrency}_24h_change`];
+
+      // Dynamically update values using animateValue
+      animateValue(`${getShortName(coin)}Price`, `${getShortName(coin)}PriceFull`, 0, finalPrice, 2000, currencySymbol);
+      setChange(`${getShortName(coin)}Change`, change24h);
+
+      console.log(`${coin.toUpperCase()} Price:`, finalPrice);
+    }
+
+    // Show success status
+    refreshStatus.innerText = "✅ Updated!";
+    setTimeout(() => {
+      refreshStatus.style.display = 'none';
+    }, 2000); // Hide after 2 seconds
+
+  } catch (error) {
+    console.error('Error fetching crypto prices:', error);
+    refreshStatus.innerText = "❌ Error fetching prices!";
+    setTimeout(() => {
+      refreshStatus.style.display = 'none';
+    }, 2000); // Hide after 2 seconds
+  } finally {
+    loader.style.display = 'none';
+    prices.style.display = 'block';
+  }
+}
+
+    function getShortName(coin) {
+      const map = {
+        bitcoin: 'btc',
+        ethereum: 'eth',
+        solana: 'sol',
+        // Add more mappings if needed
+      };
+      return map[coin] || coin;
+    }
+
+
+    function setChange(id, change) {
+      const element = document.getElementById(id);
+      const formatted = change.toFixed(2) + '%';
+      element.innerText = `(${formatted})`;
+      if (change >= 0) {
+        element.className = 'change up';
+      } else {
+        element.className = 'change down';
+      }
+ 
+   }
+
+    document.getElementById('darkModeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+    });
+
+    fetchCryptoPrices();
+    setInterval(fetchCryptoPrices, 60000);
+
+  </script>
+
+</body>
+</html>
