@@ -367,7 +367,7 @@ document.getElementById('quizForm').addEventListener('submit', function(e) {
   let result = "Balanced";
   if (risk === 'low') result = "Conservative (Savings + Gold)";
   if (risk === 'high' && horizon === 'long') result = "Aggressive (Crypto + P2P)";
-  document.getElementById('quizResult').innerText = `You're a ${result} investor!`;
+  document.getElementById('quizResult').innerText = `Your result:  ${result} investor!`;
 });
 
 // Calculator Logic
