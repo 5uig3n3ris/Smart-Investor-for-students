@@ -163,6 +163,8 @@
   </header>
 
   <h1>Crypto Dashboard</h1>
+  <button id="darkModeToggle" class="toggle-darkmode">تغییر تم</button>
+  
 
   <div class="custom-dropdown" id="currencyDropdown">
     <input type="text" id="currencyInput" placeholder="Search currency...">
@@ -188,6 +190,8 @@
   </div>
 
   <div id="refreshStatus"></div>
+  <button onclick="fetchCryptoPrices()" class="toggle-darkmode">بروزرسانی قیمت‌ها</button>
+  
   <div class="loader" id="loader">Loading prices...</div>
 
   <div id="counter">
